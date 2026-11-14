@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shadows in the Dark - 3D Horror Escape</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Ambient Vignette & Red Threat Vignette -->
+  <div id="vignette-overlay"></div>
+  <div id="threat-vignette"></div>
+
+  <!-- Hiding State Overlay (Wardrobe Slats / Bed Underside) -->
+  <div id="hiding-overlay">
+    <div class="slat-bar"></div>
+    <div class="hiding-info">
+      <div class="hiding-status">HIDDEN (SAFE FROM GHOST)</div>
+      <div class="hiding-tip">Press [E] to step out when the coast is clear</div>
+    </div>
+    <div class="slat-bar"></div>
+  </div>
+
+  <!-- Violent Jumpscare Overlay -->
+  <div id="jumpscare-overlay">
+    <div class="jumpscare-face">
+      <div class="scare-eyes">
+        <div class="scare-eye"></div>
+        <div class="scare-eye"></div>
+      </div>
+      <div class="scare-mouth"></div>
+    </div>
+  </div>
+
+  <!-- In-Game HUD Overlay -->
+  <div id="ui-container">
+    <!-- Top Bar: Objectives & Escape Timer -->
+    <div class="top-bar">
+      <div class="objective-card">
+        <h3>Exit Door Locks</h3>
+        <div id="objective-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="top-right-hud">
+        <div class="brightness-card">
+          <span class="brightness-label">☀️ BRIGHTNESS</span>
+          <input type="range" id="brightness-slider" class="brightness-slider" min="0.6" max="2.6" step="0.1" value="1.35">
+          <span id="brightness-val" class="brightness-val-text">135%</span>
+        </div>
+        <div class="timer-card">
+          <div class="timer-label">Survival Time</div>
+          <div id="survival-timer">0:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center HUD: Crosshair & Interaction Prompt -->
+    <div class="center-hud">
+      <div id="crosshair"></div>
+      <div id="interaction-prompt"></div>
+    </div>
+
+    <!-- Bottom Bar: Noise Meter & Inventory -->
+    <div class="bottom-bar">
+      <!-- Noise Sensitivity Meter -->
+      <div class="noise-card">
+        <div class="noise-header">
+          <span>Acoustic Noise</span>
+          <span id="noise-alert-text">Quiet</span>
+        </div>
+        <div class="noise-meter-track">
+          <div id="noise-meter-bar"></div>
+        </div>
+        <div class="noise-tip">Sprint = Loud noise | Crouch = Silent | Dropping heavy items alerts the ghost!</div>
+      </div>
+
+      <!-- Inventory & Carried Item -->
+      <div class="inventory-container">
+        <div id="carried-item-hud"></div>
+        <div class="inv-title">Required Escape Tools</div>
+        <div class="inventory-slots">
+          <div class="inv-slot" id="slot-crowbar" title="Heavy Crowbar - Pries Door Planks">
+            <div class="slot-icon">⛏️</div>
+            <div class="slot-name">Crowbar</div>
+          </div>
+          <div class="inv-slot" id="slot-cutters" title="Bolt Cutters - Cuts Padlock Chains">
+            <div class="slot-icon">✂️</div>
+            <div class="slot-name">Bolt Cutters</div>
+          </div>
+          <div class="inv-slot" id="slot-key" title="Master Key - Unlocks Deadbolt">
+            <div class="slot-icon">🗝️</div>
+            <div class="slot-name">Master Key</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Screen Modal -->
+  <div id="start-screen" class="modal-screen">
+    <h1>SHADOWS IN THE DARK</h1>
+    <p>
+      You are locked inside an abandoned mansion stalked by an ominous, sound-sensitive phantom. 
+      To escape, you must scavenge the house for <strong>3 tools</strong>: the Crowbar, Bolt Cutters, and Master Key. 
+      Their locations are completely randomized every run!
+    </p>
+
+    <div class="controls-guide">
+      <div class="control-item"><span class="key-badge">W, A, S, D</span> Move around</div>
+      <div class="control-item"><span class="key-badge">Mouse</span> Look around</div>
+      <div class="control-item"><span class="key-badge">Shift</span> Sprint <em style="color:#ff6666;">(Generates Sound!)</em></div>
+      <div class="control-item"><span class="key-badge">Ctrl / C</span> Crouch <em style="color:#66ff66;">(Silent Sneak)</em></div>
+      <div class="control-item"><span class="key-badge">E</span> Interact / Pick Up / Hide</div>
+      <div class="control-item"><span class="key-badge">F</span> Toggle Flashlight</div>
+      <div class="control-item"><span class="key-badge">G / Click</span> Throw/Drop Heavy Object <em style="color:#ffaa44;">(Distract Ghost!)</em></div>
+      <div class="control-item"><span class="key-badge">Closet / Bed</span> Hiding Spots <em style="color:#66ff66;">(Ghost can't see you)</em></div>
+    </div>
+
+    <button id="start-btn" class="game-btn">Enter The House</button>
+  </div>
+
+  <!-- Game Over Modal Screen -->
+  <div id="game-over-screen" class="modal-screen" style="display: none;">
+    <h1 style="color: #ff2222;">YOU WERE CAUGHT</h1>
+    <p>The spirit found you in the dark. Your soul is now part of the house...</p>
+    <p style="font-size: 13px; color: #887766;">
+      All tools and keys will be re-randomized at brand new spawn locations!
+    </p>
+    <button id="restart-btn" class="game-btn">Try Again</button>
+  </div>
+
+  <!-- Victory Modal Screen -->
+  <div id="victory-screen" class="modal-screen" style="display: none;">
+    <h1>YOU ESCAPED!</h1>
+    <p>You unlocked all the barriers and fled into the night before the spirit could catch you.</p>
+    <div id="victory-time-display"></div>
+    <button id="play-again-btn" class="game-btn">Play Again</button>
+  </div>
+
+  <!-- Game Source Entry -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
